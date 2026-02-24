@@ -5,6 +5,23 @@ const ComparePage = (() => {
     let tacticA = null;
     let tacticB = null;
 
+    // Expose slot click handlers globally so onclick attributes work in WordPress
+    window._fm26_openSlotA = function() {
+        ComparisonSlot.showSelector(function(t) {
+            tacticA = t;
+            renderSlots();
+            renderComparison();
+        });
+    };
+
+    window._fm26_openSlotB = function() {
+        ComparisonSlot.showSelector(function(t) {
+            tacticB = t;
+            renderSlots();
+            renderComparison();
+        });
+    };
+
     function render(params, container) {
         tacticA = null;
         tacticB = null;
@@ -32,41 +49,37 @@ const ComparePage = (() => {
         const slotBEl = document.getElementById('slotB');
         if (!slotAEl || !slotBEl) return;
 
-        slotAEl.innerHTML = ComparisonSlot.render('slotA-inner', tacticA);
-        slotBEl.innerHTML = ComparisonSlot.render('slotB-inner', tacticB);
-
-        // Bind click handlers — use closest() so clicks on child elements work
-        const slotAInner = document.getElementById('slotA-inner');
-        const slotBInner = document.getElementById('slotB-inner');
-
-        if (slotAInner) {
-            slotAInner.addEventListener('click', (e) => {
-                const isChangeBtn = e.target.closest('[data-action="change"]');
-                if (isChangeBtn || !tacticA) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    ComparisonSlot.showSelector((t) => {
-                        tacticA = t;
-                        renderSlots();
-                        renderComparison();
-                    });
-                }
-            });
+        // Render slot HTML with inline onclick for WordPress compatibility
+        if (tacticA) {
+            slotAEl.innerHTML = `
+                <div class="compare-slot filled" id="slotA-inner" data-slug="${esc(tacticA.slug)}">
+                    <div class="compare-slot-name">${esc(tacticA.name)}</div>
+                    <div class="compare-slot-formation">${esc(tacticA.formationFamily)} &middot; ${esc(tacticA.primaryStyle)}</div>
+                    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();window._fm26_openSlotA()">Change</button>
+                </div>
+            `;
+        } else {
+            slotAEl.innerHTML = `
+                <div class="compare-slot" id="slotA-inner" onclick="window._fm26_openSlotA()" style="cursor:pointer">
+                    <div class="compare-slot-placeholder">Click to select a tactic</div>
+                </div>
+            `;
         }
 
-        if (slotBInner) {
-            slotBInner.addEventListener('click', (e) => {
-                const isChangeBtn = e.target.closest('[data-action="change"]');
-                if (isChangeBtn || !tacticB) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    ComparisonSlot.showSelector((t) => {
-                        tacticB = t;
-                        renderSlots();
-                        renderComparison();
-                    });
-                }
-            });
+        if (tacticB) {
+            slotBEl.innerHTML = `
+                <div class="compare-slot filled" id="slotB-inner" data-slug="${esc(tacticB.slug)}">
+                    <div class="compare-slot-name">${esc(tacticB.name)}</div>
+                    <div class="compare-slot-formation">${esc(tacticB.formationFamily)} &middot; ${esc(tacticB.primaryStyle)}</div>
+                    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();window._fm26_openSlotB()">Change</button>
+                </div>
+            `;
+        } else {
+            slotBEl.innerHTML = `
+                <div class="compare-slot" id="slotB-inner" onclick="window._fm26_openSlotB()" style="cursor:pointer">
+                    <div class="compare-slot-placeholder">Click to select a tactic</div>
+                </div>
+            `;
         }
     }
 
